@@ -21,7 +21,7 @@ func TestOpen(t *testing.T) {
 
 func TestReadWithoutOpen(t *testing.T) {
 	meter := new(Meter)
-	_, err := meter.Read()
+	_, err := meter.Read(false)
 	require.Error(t, err, "Device needs to be opened")
 }
 
@@ -29,7 +29,7 @@ func TestReadWhenClosed(t *testing.T) {
 	meter := new(Meter)
 	meter.Open(device)
 	meter.Close()
-	_, err := meter.Read()
+	_, err := meter.Read(false)
 	require.Error(t, err, "Device needs to be opened")
 }
 
@@ -39,7 +39,7 @@ func TestRead(t *testing.T) {
 	require.NoError(t, err)
 	defer meter.Close()
 
-	result, err := meter.Read()
+	result, err := meter.Read(false)
 	require.NoError(t, err)
 
 	log.Printf("Temp: '%v', CO2: '%v'", result.Temperature, result.Co2)

@@ -74,7 +74,7 @@ func (m *Meter) ioctl() error {
 
 // Read will read from the device file until it finds a temperature and co2 measurement. Before it can be used the
 // device file needs to be opened via Open.
-func (m *Meter) Read() (*Measurement, error) {
+func (m *Meter) Read(bypassDecrypt bool) (*Measurement, error) {
 	if atomic.LoadInt32(&m.opened) != 1 {
 		return nil, errors.New("Device needs to be opened")
 	}
@@ -88,7 +88,7 @@ func (m *Meter) Read() (*Measurement, error) {
 			return nil, errors.Wrapf(err, "Could not read from: '%v'", m.file.Name())
 		}
 
-		decrypted := m.decrypt(result)
+		decrypted := m.decrypt(result, bypassDecrypt)
 
 		operation := decrypted[0]
 		value := decrypted[1]<<8 | decrypted[2]
@@ -107,7 +107,16 @@ func (m *Meter) Read() (*Measurement, error) {
 }
 
 // decrypt is a clone of the python decrypt function of the original article: https://hackaday.io/project/5301-reverse-engineering-a-low-cost-usb-co-monitor/log/17909-all-your-base-are-belong-to-us
-func (m *Meter) decrypt(data []byte) []uint {
+func (m *Meter) decrypt(data []byte, bypassDecrypt bool) []uint {
+	if bypassDecrypt {
+		// convert []byte to []uint
+		result := make([]uint, len(data))
+		for i := range data {
+			result[i] = uint(data[i])
+		}
+		return result
+	}
+
 	state := []uint{0x48, 0x74, 0x65, 0x6D, 0x70, 0x39, 0x39, 0x65}
 	shuffle := []int{2, 4, 0, 7, 1, 6, 5, 3}
 

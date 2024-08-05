@@ -15,6 +15,7 @@ var (
 	device     = kingpin.Arg("device", "CO2 Meter device, such as /dev/hidraw2").Required().String()
 	listenAddr = kingpin.Arg("listen-address", "The address to listen on for HTTP requests.").
 			Default(":8080").String()
+	bypassDecrypt = kingpin.Flag("bypass-decrypt", "If set, bypasses the decrypt function").Default("false").Bool()
 )
 
 var (
@@ -50,10 +51,11 @@ func measure() {
 	}
 
 	for {
-		result, err := meter.Read()
+		result, err := meter.Read(*bypassDecrypt)
 		if err != nil {
 			log.Fatalf("Something went wrong: '%v'", err)
 		}
+		log.Printf("Temp: '%v', CO2: '%v'", result.Temperature, result.Co2)
 		temperature.Set(result.Temperature)
 		co2.Set(float64(result.Co2))
 	}
